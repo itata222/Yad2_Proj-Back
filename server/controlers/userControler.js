@@ -3,6 +3,7 @@ const User = require('../models/userModel');
 
 exports.createUser = async (req, res) => {
     try {
+        console.log(req.body)
         const user = new User(req.body);
         if (!user) {
             throw new Error('no user added')
