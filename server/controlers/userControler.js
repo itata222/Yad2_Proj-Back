@@ -45,3 +45,23 @@ exports.logout = async (req, res) => {
         })
     }
 }
+
+exports.updateInfo = async (req, res) => {
+    const _id = req.user.id;
+    try {
+        if (req.body && (!req.body.password && !req.body.email))
+            throw new Error('You can only edit your password or email')
+        const user = await User.findById({ _id });
+        const newPassword = req.body?.password;
+        const newEmail = req.body?.email;
+        user.password = newPassword || user.password;
+        user.email = newEmail || user.email;
+        await user.save();
+        res.send(user);
+    } catch (err) {
+        res.status(500).send({
+            status: 500,
+            message: err.message
+        })
+    }
+}

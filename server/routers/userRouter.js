@@ -1,6 +1,6 @@
 const express = require('express');
 const auth = require('../middlewares/auth')
-const { createUser, loginUser, logout } = require('../controlers/userControler');
+const { createUser, loginUser, logout, updateInfo } = require('../controlers/userControler');
 
 const router = new express.Router();
 
@@ -9,6 +9,8 @@ router.post('/create-user', createUser)
 router.post('/login-user', loginUser)
 
 router.post('/logout-user', auth, logout)
+
+router.patch('/update-user', auth, updateInfo)
 
 router.post('/admin/add-cinema', auth, async (req, res) => {
     // try {
