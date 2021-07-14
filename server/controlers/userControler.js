@@ -1,3 +1,4 @@
+const Post = require('../models/postModel');
 const User = require('../models/userModel');
 
 
@@ -33,6 +34,7 @@ exports.loginUser = async (req, res) => {
 }
 
 exports.logout = async (req, res) => {
+    console.log(7)
     const user = req.user;
     try {
         user.tokens = user.tokens.filter((tokenDoc) => tokenDoc.token !== req.token)
@@ -63,5 +65,32 @@ exports.updateInfo = async (req, res) => {
             status: 500,
             message: err.message
         })
+    }
+}
+
+exports.addPost=async (req, res) => {
+    try {
+        const post = new Post(req.body);
+        const user = await User.findById(req.user._id);
+        user.posts = user.posts.concat({ post });
+        await user.save();
+        await post.save();
+        res.send(post)
+    } catch (e) {
+        res.status(500).send(e)
+    }
+}
+
+exports.getPosts=async (req, res) => {
+    try {
+        const posts=await Post.find({}).sort({'createdAt': -1}).limit(5)
+        if(!posts)  
+            throw new Error({
+                status:500,
+                message:'no posts yet'
+            })
+        res.send(posts)
+    } catch (e) {
+        res.status(500).send(e.message);
     }
 }

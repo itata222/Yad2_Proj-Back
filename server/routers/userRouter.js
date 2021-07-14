@@ -1,6 +1,8 @@
 const express = require('express');
 const auth = require('../middlewares/auth')
-const { createUser, loginUser, logout, updateInfo } = require('../controlers/userControler');
+const { createUser, loginUser, logout, updateInfo, addPost, getPosts } = require('../controlers/userControler');
+const Post = require('../models/postModel');
+const User = require('../models/userModel');
 
 const router = new express.Router();
 
@@ -8,41 +10,13 @@ router.post('/create-user', createUser)
 
 router.post('/login-user', loginUser)
 
-router.post('/logout-user', auth, logout)
+router.post('/user/logout-user', auth, logout)
 
-router.patch('/update-user', auth, updateInfo)
+router.patch('/user/update-user', auth, updateInfo)
 
-router.post('/admin/add-cinema', auth, async (req, res) => {
-    // try {
-    //     const cinema = new Cinema(req.body)
-    //     await cinema.save()
-    //     res.send(cinema)
-    // } catch (e) {
-    //     res.status(500).send(e)
-    // }
-})
+router.post('/user/add-post', auth, addPost)
 
-router.post('/admin/add-show', auth, async (req, res) => {
-    // try {
-    //     const show = new Show(req.body.show);
-    //     const cinema = await Cinema.findById(req.body.show.cinema._id);
-    //     for (let i = 1; i <= req.body.show.cinema.numberOfSeats; i++) {
-    //         const seat = new Seat({
-    //             number: i,
-    //             price: 14,
-    //             isTaken: false
-    //         });
-    //         await seat.save();
-    //         show.seats = show.seats.concat({ seat });
-    //     }
-    //     cinema.shows = cinema.shows.concat({ show });
-    //     await cinema.save();
-    //     await show.save();
-    //     res.send(show)
-    // } catch (e) {
-    //     res.status(500).send(e.message);
-    // }
-})
+router.get('/get-posts', getPosts)
 
 router.patch('/admin/edit-show', auth, async (req, res) => {
     // const _id = req.query.id;
