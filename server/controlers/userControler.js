@@ -74,10 +74,10 @@ exports.addPost=async (req, res) => {
         const user = await User.findById(req.user._id);
         user.posts = user.posts.concat({ post });
         await user.save();
-        await post.save();
+        await post.save()
         res.send(post)
     } catch (e) {
-        res.status(500).send(e)
+        res.status(500).send(e.message)
     }
 }
 

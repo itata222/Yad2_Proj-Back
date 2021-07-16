@@ -112,24 +112,27 @@ const postSchema = new mongoose.Schema(
         },
         price: {
             type:Number,
+            min:[0,'Price cant be negative']
         },
         entryDate: {
             type:Date,
-            required:true,
-
+            default:undefined,
+            required:function(){
+                if(this.immidiate===true)
+                    return false;
+                else
+                    return true
+            },
         },
         immidiate: {
             type:Boolean,
-        },
-        photos: [
-            {
-                photos: {
-                    type: Buffer
-                }
-            }
-        ],
-        video: {
-            type: Buffer
+            default:false,
+            required:function(){
+                if(this.entryDate==undefined)
+                    return true;
+                else
+                    return false
+            },
         },
         contactName: {
             type:String,
@@ -143,7 +146,6 @@ const postSchema = new mongoose.Schema(
         },
         contactEmail: {
             type:String,
-            required:true,
             trim:true
         }
     },
