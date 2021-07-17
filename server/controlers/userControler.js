@@ -82,8 +82,10 @@ exports.addPost=async (req, res) => {
 }
 
 exports.getPosts=async (req, res) => {
+    const limit=req.query.limit;
+    const page=req.query.page;
     try {
-        const posts=await Post.find({}).sort({'createdAt': -1}).limit(5)
+        const posts=await Post.find({}).limit(limit).skip((page-1)*limit).sort({'createdAt': -1})
         if(!posts)  
             throw new Error({
                 status:500,
