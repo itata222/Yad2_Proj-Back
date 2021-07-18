@@ -24,17 +24,14 @@ const postSchema = new mongoose.Schema(
         },
         houseNumber: {
             type:Number,
-            min:[0,'House Number cant be negative']
         },
         floor: {
             type:Number,
             required:true,
-            min:[0,'Floor level cant be negative']
         },
         floorsInBuilding: {
             type:Number,
             required:true,
-            min:[0,'Floor level in the building cant be negative']
         },
         onBars: {
             type:Boolean,
@@ -54,13 +51,9 @@ const postSchema = new mongoose.Schema(
         },
         parking: {
             type:Number,
-            min:0,
-            max:3
         },
         balcony: {
             type:Number,
-            min:0,
-            max:3
         },
         airCondition: {
             type:Boolean,
@@ -104,7 +97,6 @@ const postSchema = new mongoose.Schema(
         },
         buildMr: {
             type:Number,
-            min:[0,'buildMr cant be negative']
         },
         totalMr: {
             type:Number,
@@ -112,7 +104,6 @@ const postSchema = new mongoose.Schema(
         },
         price: {
             type:Number,
-            min:[0,'Price cant be negative']
         },
         entryDate: {
             type:Date,

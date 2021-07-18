@@ -9,8 +9,9 @@ exports.createUser = async (req, res) => {
         if (!user) {
             throw new Error('no user added')
         }
+        const token = await user.generateAuthToken();
         await user.save();
-        res.send(user)
+        res.send({user,token})
     } catch (error) {
         res.status(500).send({
             status: 500,
@@ -82,10 +83,10 @@ exports.addPost=async (req, res) => {
 }
 
 exports.getPosts=async (req, res) => {
-    const limit=req.query.limit;
-    const page=req.query.page;
+    const limit=parseInt(req.query.limit);
+    const page=parseInt(req.query.page);
     try {
-        const posts=await Post.find({}).limit(limit).skip((page-1)*limit).sort({'createdAt': -1})
+        const posts=await Post.find({}).limit(limit).skip((page-1)*limit).sort({'createdAt': -1});
         if(!posts)  
             throw new Error({
                 status:500,
@@ -97,4 +98,18 @@ exports.getPosts=async (req, res) => {
     }
 }
 
-
+exports.userPosts=async(req,res)=>{
+    const id=req.query.id;
+    try {
+        const user=await User.findById(id);
+        if(!user)  
+        throw new Error({
+            status:500,
+            message:'User not found'
+        })
+        const userPostsPopulated=await user.populate('posts.post').execPopulate();
+        res.send(userPostsPopulated.posts)
+    } catch (e) {
+        res.status(500).send(e.message)
+    }
+}

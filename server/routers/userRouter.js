@@ -1,6 +1,6 @@
 const express = require('express');
 const auth = require('../middlewares/auth')
-const { createUser, loginUser, logout, updateInfo, addPost, getPosts } = require('../controlers/userControler');
+const { createUser, loginUser, logout, updateInfo, addPost, getPosts, userPosts } = require('../controlers/userControler');
 
 const router = new express.Router();
 
@@ -15,6 +15,8 @@ router.patch('/user/update-user', auth, updateInfo)
 router.post('/user/add-post', auth, addPost)
 
 router.get('/get-posts', getPosts)
+
+router.get('/user/my-posts',auth,userPosts)
 
 router.patch('/admin/edit-show', auth, async (req, res) => {
     // const _id = req.query.id;
