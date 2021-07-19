@@ -85,8 +85,11 @@ exports.addPost=async (req, res) => {
 exports.getPosts=async (req, res) => {
     const limit=parseInt(req.query.limit);
     const page=parseInt(req.query.page);
+    const query=JSON.parse(req.query.queryObj)
     try {
-        const posts=await Post.find({}).limit(limit).skip((page-1)*limit).sort({'createdAt': -1});
+        const sortByQuery=query?.sort;
+        const sortBy=!!sortByQuery?`${sortByQuery}`:{'createdAt':-1} ;
+        const posts=await Post.find({}).limit(limit).skip((page-1)*limit).sort(sortBy);
         if(!posts)  
             throw new Error({
                 status:500,

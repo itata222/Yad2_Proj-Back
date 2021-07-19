@@ -18,23 +18,5 @@ router.get('/get-posts', getPosts)
 
 router.get('/user/my-posts',auth,userPosts)
 
-router.patch('/admin/edit-show', auth, async (req, res) => {
-    // const _id = req.query.id;
-    // const updatedShow = req.body.updatedShow
-    // try {
-    //     const show = await Show.findByIdAndUpdate(_id, { ...updatedShow }, {
-    //         runValidators: true,
-    //         new: true
-    //     });
-    //     await show.save();
-    //     res.send(show);
-    // } catch (err) {
-    //     res.status(500).send({
-    //         status: 500,
-    //         message: err.message
-    //     })
-    // }
-})
-
 
 module.exports = router;
