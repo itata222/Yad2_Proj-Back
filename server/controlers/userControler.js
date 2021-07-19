@@ -89,7 +89,7 @@ exports.getPosts=async (req, res) => {
     try {
         const sortByQuery=query?.sort;
         const sortBy=!!sortByQuery?`${sortByQuery}`:{'createdAt':-1} ;
-        const posts=await Post.find({}).limit(limit).skip((page-1)*limit).sort(sortBy);
+        const posts=await Post.find({price:{ $gte: query.fromPrice||-1}}).limit(limit).skip((page-1)*limit).sort(sortBy);
         if(!posts)  
             throw new Error({
                 status:500,
