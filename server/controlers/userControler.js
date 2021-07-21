@@ -86,16 +86,59 @@ exports.getPosts=async (req, res) => {
     const limit=parseInt(req.query.limit);
     const page=parseInt(req.query.page);
     const query=JSON.parse(req.query.queryObj)
+    let hasMore=true;
     try {
-        const sortByQuery=query?.sort;
-        const sortBy=!!sortByQuery?`${sortByQuery}`:{'createdAt':-1} ;
-        const posts=await Post.find({price:{ $gte: query.fromPrice||-1}}).limit(limit).skip((page-1)*limit).sort(sortBy);
-        if(!posts)  
-            throw new Error({
-                status:500,
-                message:'no posts yet'
+        // console.log(query)
+        const sortBy=query?.sort?`${query?.sort}`:{'createdAt':-1} ;
+        const textBy=query?.text?`${query.text}`:'';
+        const priceRange=query?.toPrice?
+        { $gte :  query?.fromPrice||-1, $lte : query?.toPrice}:
+        { $gte :  query?.fromPrice||-1}
+        const totalMrRange=query?.sizeTo?
+        { $gt :  query?.sizeFrom||0, $lte : query?.sizeTo}:
+        { $gt :  query?.sizeFrom||0}
+        let types=[],defaultTypes;
+        const queryAsArray = Object.entries(query);
+        const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='immidiate');
+        const queryOfAllBooleans = Object.fromEntries(queryFilteredOnlyToBooleans);
+        if(query.types.length>0)
+            Array.from(query.types).map((type)=>{
+                types.push({
+                    propType:type
+                })
             })
-        res.send(posts)
+        else
+            defaultTypes={ propType:{$regex : ''}}
+
+        let entryDate;
+        if(!!query.entryDate)
+            entryDate= { $gte : new Date(query.entryDate) }
+        else if(query.immidiate===true)
+            entryDate={ $gte : new Date() };
+        else{
+            const oneYearAgo=new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            entryDate = {$gte:oneYearAgo}
+        }
+        const queryObj={
+            $or: [ { city:{$regex : textBy}}, { street:{$regex : textBy} }] ,
+            $or: types.length>0?types:[defaultTypes],
+            rooms : { $gte :  query?.roomsFrom||0, $lte : query?.roomsTo||12},
+            floor : { $gte :  query?.floorsFrom||0, $lte : query?.floorsTo||20},
+            totalMr : totalMrRange,
+            price : priceRange,
+            entryDate,
+            description:{$regex : query.freeText?query.freeText:''},
+            ...queryOfAllBooleans,
+        }
+        console.log(queryObj)
+        const lastPost=(await Post.find({}).sort(sortBy).skip(0)).pop();
+        const posts=await Post.find(queryObj).limit(limit).skip((page-1)*limit).sort(sortBy);
+        if(posts.length>0&&String(lastPost._id)===String(posts[posts.length-1]._id))
+            hasMore=false;
+        if(posts.length===0)
+            hasMore=false;
+        res.send({posts,hasMore})
     } catch (e) {
         res.status(500).send(e.message);
     }
