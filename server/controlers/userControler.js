@@ -89,15 +89,17 @@ exports.getPosts=async (req, res) => {
     let hasMore=true;
     try {
         // console.log(query)
-        const sortBy=query?.sort?`${query?.sort}`:{'createdAt':-1} ;
-        const textBy=query?.text?`${query.text}`:'';
+        const sortBy=query.sort?`${query?.sort}`:{'createdAt':-1} ;
+        const textBy=query.text?`${query.text}`:'';
+        const cityText=!!query?.city?`${query.city}`:textBy;
+        const streetText=!!query?.street?`${query.street}`:cityText;
         const priceRange=query?.toPrice?
         { $gte :  query?.fromPrice||-1, $lte : query?.toPrice}:
         { $gte :  query?.fromPrice||-1}
         const totalMrRange=query?.sizeTo?
         { $gt :  query?.sizeFrom||0, $lte : query?.sizeTo}:
         { $gt :  query?.sizeFrom||0}
-        let types=[],defaultTypes;
+        let types=[],defaultTypes,entryDate,typesFinal;
         const queryAsArray = Object.entries(query);
         const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='immidiate');
         const queryOfAllBooleans = Object.fromEntries(queryFilteredOnlyToBooleans);
@@ -108,10 +110,14 @@ exports.getPosts=async (req, res) => {
                 })
             })
         else
-            defaultTypes={ propType:{$regex : ''}}
+            defaultTypes={propType:{$regex : ''}}
 
-        let entryDate;
-        if(!!query.entryDate)
+        if(types.length>0)
+            typesFinal= [...types]
+        else
+            typesFinal=[defaultTypes]
+            
+       if(!!query.entryDate)
             entryDate= { $gte : new Date(query.entryDate) }
         else if(query.immidiate===true)
             entryDate={ $gte : new Date() };
@@ -120,10 +126,13 @@ exports.getPosts=async (req, res) => {
             oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
             entryDate = {$gte:oneYearAgo}
         }
+        console.log(cityText,streetText)
         const queryObj={
-            $or: [ { city:{$regex : textBy}}, { street:{$regex : textBy} }] ,
-            $or: types.length>0?types:[defaultTypes],
             rooms : { $gte :  query?.roomsFrom||0, $lte : query?.roomsTo||12},
+            $and:[
+                {$or:[...typesFinal ]},
+                {$or: [ { city:{$regex : cityText}}, { street:{$regex :streetText} }]},
+            ],
             floor : { $gte :  query?.floorsFrom||0, $lte : query?.floorsTo||20},
             totalMr : totalMrRange,
             price : priceRange,
@@ -131,9 +140,11 @@ exports.getPosts=async (req, res) => {
             description:{$regex : query.freeText?query.freeText:''},
             ...queryOfAllBooleans,
         }
+        // console.log(Object.values(Object.values(queryObj)[1][1])[0])
         console.log(queryObj)
         const lastPost=(await Post.find({}).sort(sortBy).skip(0)).pop();
         const posts=await Post.find(queryObj).limit(limit).skip((page-1)*limit).sort(sortBy);
+        console.log(posts.length)
         if(posts.length>0&&String(lastPost._id)===String(posts[posts.length-1]._id))
             hasMore=false;
         if(posts.length===0)
@@ -157,5 +168,13 @@ exports.userPosts=async(req,res)=>{
         res.send(userPostsPopulated.posts)
     } catch (e) {
         res.status(500).send(e.message)
+    }
+}
+
+exports.postFile=async(req,res)=>{
+    try {
+        res.send('wohooo')
+    } catch (e) {
+        
     }
 }

@@ -1,6 +1,8 @@
 const express = require('express');
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
 const auth = require('../middlewares/auth')
-const { createUser, loginUser, logout, updateInfo, addPost, getPosts, userPosts } = require('../controlers/userControler');
+const { createUser, loginUser, logout, updateInfo, addPost, getPosts, userPosts, postFile } = require('../controlers/userControler');
 
 const router = new express.Router();
 
@@ -17,6 +19,8 @@ router.post('/user/add-post', auth, addPost)
 router.get('/get-posts', getPosts)
 
 router.get('/user/my-posts',auth,userPosts)
+
+router.post('/user/post-file',auth,upload.single('file'),postFile)
 
 
 module.exports = router;
