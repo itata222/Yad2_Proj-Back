@@ -173,6 +173,9 @@ exports.userPosts=async(req,res)=>{
 
 exports.postFile=async(req,res)=>{
     try {
+        const file=req.file;
+        // const info=req.body.file;
+        console.log(file)
         res.send('wohooo')
     } catch (e) {
         
