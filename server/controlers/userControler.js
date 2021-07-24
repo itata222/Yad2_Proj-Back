@@ -1,10 +1,15 @@
+const { uploadFile, getFilesStream } = require('../../s3');
 const Post = require('../models/postModel');
 const User = require('../models/userModel');
+const fs=require('fs');
+const util=require('util');
+
+const unlinkFile=util.promisify(fs.unlink);
+const portUrl=`http://localhost:${process.env.PORT}`
 
 
 exports.createUser = async (req, res) => {
     try {
-        console.log(req.body)
         const user = new User(req.body);
         if (!user) {
             throw new Error('no user added')
@@ -35,7 +40,6 @@ exports.loginUser = async (req, res) => {
 }
 
 exports.logout = async (req, res) => {
-    console.log(7)
     const user = req.user;
     try {
         user.tokens = user.tokens.filter((tokenDoc) => tokenDoc.token !== req.token)
@@ -88,11 +92,11 @@ exports.getPosts=async (req, res) => {
     const query=JSON.parse(req.query.queryObj)
     let hasMore=true;
     try {
-        // console.log(query)
         const sortBy=query.sort?`${query?.sort}`:{'createdAt':-1} ;
         const textBy=query.text?`${query.text}`:'';
         const cityText=!!query?.city?`${query.city}`:textBy;
         const streetText=!!query?.street?`${query.street}`:cityText;
+        const onlyWithImage=query?.withImage===true;
         const priceRange=query?.toPrice?
         { $gte :  query?.fromPrice||-1, $lte : query?.toPrice}:
         { $gte :  query?.fromPrice||-1}
@@ -101,7 +105,7 @@ exports.getPosts=async (req, res) => {
         { $gt :  query?.sizeFrom||0}
         let types=[],defaultTypes,entryDate,typesFinal;
         const queryAsArray = Object.entries(query);
-        const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='immidiate');
+        const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='withImage'&&key!=='immidiate');
         const queryOfAllBooleans = Object.fromEntries(queryFilteredOnlyToBooleans);
         if(query.types.length>0)
             Array.from(query.types).map((type)=>{
@@ -126,8 +130,8 @@ exports.getPosts=async (req, res) => {
             oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
             entryDate = {$gte:oneYearAgo}
         }
-        console.log(cityText,streetText)
         const queryObj={
+            photosLength:{$gte:onlyWithImage?1:0 },
             rooms : { $gte :  query?.roomsFrom||0, $lte : query?.roomsTo||12},
             $and:[
                 {$or:[...typesFinal ]},
@@ -140,15 +144,13 @@ exports.getPosts=async (req, res) => {
             description:{$regex : query.freeText?query.freeText:''},
             ...queryOfAllBooleans,
         }
-        // console.log(Object.values(Object.values(queryObj)[1][1])[0])
-        console.log(queryObj)
         const lastPost=(await Post.find({}).sort(sortBy).skip(0)).pop();
         const posts=await Post.find(queryObj).limit(limit).skip((page-1)*limit).sort(sortBy);
-        console.log(posts.length)
         if(posts.length>0&&String(lastPost._id)===String(posts[posts.length-1]._id))
             hasMore=false;
         if(posts.length===0)
             hasMore=false;
+            console.log(queryObj)
         res.send({posts,hasMore})
     } catch (e) {
         res.status(500).send(e.message);
@@ -174,10 +176,20 @@ exports.userPosts=async(req,res)=>{
 exports.postFile=async(req,res)=>{
     try {
         const file=req.file;
-        // const info=req.body.file;
-        console.log(file)
-        res.send('wohooo')
+
+        //apply filter / resize ....
+
+        const result=await uploadFile(file)
+        await unlinkFile(file.path)
+        res.send({filePath:`${portUrl}/files/${result.Key}`})
     } catch (e) {
-        
+        res.send(e)
     }
+}
+
+exports.getFiles=async(req,res)=>{
+    const key=req.params.key;
+    const readStream=getFilesStream(key)
+
+    readStream.pipe(res)
 }

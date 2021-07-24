@@ -91,6 +91,16 @@ const postSchema = new mongoose.Schema(
         bars: {
             type:Boolean,
         },
+        photos:[ ],
+        photosLength:{
+            type:Number,
+            default:function(){
+                return this.photos.length
+            }
+        },
+        video:{
+            type:String
+        },
         description: {
             type:String,
             trim:true
