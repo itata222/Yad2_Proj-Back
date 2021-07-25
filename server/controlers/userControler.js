@@ -89,7 +89,8 @@ exports.addPost=async (req, res) => {
 exports.getPosts=async (req, res) => {
     const limit=parseInt(req.query.limit);
     const page=parseInt(req.query.page);
-    const query=JSON.parse(req.query.queryObj)
+    const query=JSON.parse(req.query.queryObj);
+    const currentLength=req.query.postsCurrentLength?parseInt(req.query.postsCurrentLength):0
     let hasMore=true;
     try {
         const sortBy=query.sort?`${query?.sort}`:{'createdAt':-1} ;
@@ -98,11 +99,11 @@ exports.getPosts=async (req, res) => {
         const streetText=!!query?.street?`${query.street}`:cityText;
         const onlyWithImage=query?.withImage===true;
         const priceRange=query?.toPrice?
-        { $gte :  query?.fromPrice||-1, $lte : query?.toPrice}:
-        { $gte :  query?.fromPrice||-1}
+        { $gte :  query.fromPrice||-1, $lte : query?.toPrice}:
+        { $gte :  query.fromPrice||-1}
         const totalMrRange=query?.sizeTo?
-        { $gt :  query?.sizeFrom||0, $lte : query?.sizeTo}:
-        { $gt :  query?.sizeFrom||0}
+        { $gt :  query.sizeFrom||0, $lte : query?.sizeTo}:
+        { $gt :  query.sizeFrom||0}
         let types=[],defaultTypes,entryDate,typesFinal;
         const queryAsArray = Object.entries(query);
         const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='withImage'&&key!=='immidiate');
@@ -144,13 +145,20 @@ exports.getPosts=async (req, res) => {
             description:{$regex : query.freeText?query.freeText:''},
             ...queryOfAllBooleans,
         }
-        const lastPost=(await Post.find({}).sort(sortBy).skip(0)).pop();
-        const posts=await Post.find(queryObj).limit(limit).skip((page-1)*limit).sort(sortBy);
-        if(posts.length>0&&String(lastPost._id)===String(posts[posts.length-1]._id))
+        const allPostsThatMeetsTheQuery=await Post.find(queryObj).sort(sortBy);
+        let skip=(page-1)*limit;
+        if(query.fromPrice===1||query.withImage===true){
+            skip=skip>0?currentLength:(page-1)*limit;
+        }
+        if(query.fromPrice===-1||query.withImage===false&&skip>0)
+            skip=(page-1)*limit;
+        const posts=await Post.find(queryObj).limit(limit).skip(skip).sort(sortBy);
+
+        if(posts.length>0&&String(posts[posts.length-1]._id)===String(allPostsThatMeetsTheQuery[allPostsThatMeetsTheQuery.length-1]._id)){
             hasMore=false;
+        }
         if(posts.length===0)
-            hasMore=false;
-            console.log(queryObj)
+            hasMore=false
         res.send({posts,hasMore})
     } catch (e) {
         res.status(500).send(e.message);
