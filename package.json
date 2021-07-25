@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": ".\\node_modules\\.bin\\env-cmd -f .\\config\\dev.env nodemon .\\server\\index.js"
+    "dev": ".\\node_modules\\.bin\\env-cmd -f .\\config\\.env nodemon .\\server\\index.js"
   },
   "author": "",
   "license": "ISC",

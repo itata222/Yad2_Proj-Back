@@ -101,6 +101,7 @@ exports.getPosts=async (req, res) => {
         const priceRange=query?.toPrice?
         { $gte :  query.fromPrice||-1, $lte : query?.toPrice}:
         { $gte :  query.fromPrice||-1}
+        console.log(priceRange)
         const totalMrRange=query?.sizeTo?
         { $gt :  query.sizeFrom||0, $lte : query?.sizeTo}:
         { $gt :  query.sizeFrom||0}
