@@ -98,10 +98,12 @@ exports.getPosts=async (req, res) => {
         const cityText=!!query?.city?`${query.city}`:textBy;
         const streetText=!!query?.street?`${query.street}`:cityText;
         const onlyWithImage=query?.withImage===true;
+        const roomsRange=    (!!query.roomsTo||query.roomsTo===0)?
+        { $gte :  query.roomsFrom||0, $lte : query.roomsTo}:
+        { $gte :  query.roomsFrom||0}
         const priceRange=query?.toPrice?
-        { $gte :  query.fromPrice||-1, $lte : query?.toPrice}:
+        { $gte :  query.fromPrice||-1, $lte : query.toPrice}:
         { $gte :  query.fromPrice||-1}
-        console.log(priceRange)
         const totalMrRange=query?.sizeTo?
         { $gt :  query.sizeFrom||0, $lte : query?.sizeTo}:
         { $gt :  query.sizeFrom||0}
@@ -134,7 +136,7 @@ exports.getPosts=async (req, res) => {
         }
         const queryObj={
             photosLength:{$gte:onlyWithImage?1:0 },
-            rooms : { $gte :  query?.roomsFrom||0, $lte : query?.roomsTo||12},
+            rooms : roomsRange,
             $and:[
                 {$or:[...typesFinal ]},
                 {$or: [ { city:{$regex : cityText}}, { street:{$regex :streetText} }]},
@@ -160,6 +162,7 @@ exports.getPosts=async (req, res) => {
         }
         if(posts.length===0)
             hasMore=false
+            console.log(roomsRange)
         res.send({posts,hasMore})
     } catch (e) {
         res.status(500).send(e.message);
