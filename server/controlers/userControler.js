@@ -107,23 +107,20 @@ exports.getPosts=async (req, res) => {
         const totalMrRange=query?.sizeTo?
         { $gt :  query.sizeFrom||0, $lte : query?.sizeTo}:
         { $gt :  query.sizeFrom||0}
-        let types=[],defaultTypes,entryDate,typesFinal;
+        let types=[],entryDate,typesFinal;
         const queryAsArray = Object.entries(query);
-        const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='withImage'&&key!=='immidiate');
+        const queryFilteredOnlyToBooleans = queryAsArray.filter(([key, value]) => typeof value=='boolean'&&key!=='withImage'&&key!=='immidiate'&&value!==false);
         const queryOfAllBooleans = Object.fromEntries(queryFilteredOnlyToBooleans);
-        if(query.types.length>0)
+        if(query.types.length>0){
             Array.from(query.types).map((type)=>{
                 types.push({
                     propType:type
                 })
             })
+            typesFinal=[...types]
+        }
         else
-            defaultTypes={propType:{$regex : ''}}
-
-        if(types.length>0)
-            typesFinal= [...types]
-        else
-            typesFinal=[defaultTypes]
+            typesFinal=[{propType:{$regex : ''}}]
             
        if(!!query.entryDate)
             entryDate= { $gte : new Date(query.entryDate) }
@@ -148,21 +145,14 @@ exports.getPosts=async (req, res) => {
             description:{$regex : query.freeText?query.freeText:''},
             ...queryOfAllBooleans,
         }
-        const allPostsThatMeetsTheQuery=await Post.find(queryObj).sort(sortBy);
-        let skip=(page-1)*limit;
-        if(query.fromPrice===1||query.withImage===true){
-            skip=skip>0?currentLength:(page-1)*limit;
-        }
-        if(query.fromPrice===-1||query.withImage===false&&skip>0)
-            skip=(page-1)*limit;
-        const posts=await Post.find(queryObj).limit(limit).skip(skip).sort(sortBy);
 
-        if(posts.length>0&&String(posts[posts.length-1]._id)===String(allPostsThatMeetsTheQuery[allPostsThatMeetsTheQuery.length-1]._id)){
-            hasMore=false;
-        }
-        if(posts.length===0)
+        let skip=(page-1)*limit;
+        if(query.fromPrice===1||query.withImage===true)
+            skip=skip>0?currentLength:(page-1)*limit;
+
+        const posts=await Post.find(queryObj).limit(limit).skip(skip).sort(sortBy);
+        if(posts.length<5)
             hasMore=false
-            console.log(roomsRange)
         res.send({posts,hasMore})
     } catch (e) {
         res.status(500).send(e.message);
